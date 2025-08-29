@@ -5,8 +5,6 @@ import torch.nn.functional as F
 from torchvision import transforms
 from PIL import Image
 
-# Define the CNN architecture
-# This must be the same definition as in your training notebook
 class CurrencyCNN(nn.Module):
     def __init__(self, num_classes):
         super(CurrencyCNN, self).__init__()
@@ -27,21 +25,15 @@ class CurrencyCNN(nn.Module):
         x = self.fc2(x)
         return x
 
-# Set up the device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# The number of classes in your dataset
 num_classes = 7
-# The class names from your training data
 class_names = ['1Hundrednote', '2Hundrednote', '2Thousandnote', '5Hundrednote', 'Fiftynote', 'Tennote', 'Twentynote']
 
-# Load the trained model
-# Note: You need to save your trained model first from your notebook
-model = torch.load('currency_cnn_model.pth', map_location=device, weights_only=False)
+model = torch.load('currency_cnn_model.pkl', map_location=device, weights_only=False)
 
 model.eval()
 
-# Define the same transformations as in your training code
 transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor(),
@@ -50,9 +42,6 @@ transform = transforms.Compose([
 ])
 
 def predict(image, model, transform):
-    """
-    Takes an image and a model, and returns the predicted class.
-    """
     image = transform(image).unsqueeze(0).to(device)
 
     with torch.no_grad():
@@ -61,7 +50,6 @@ def predict(image, model, transform):
     
     return class_names[predicted.item()]
 
-# Streamlit UI
 st.title("Currency Classification App")
 
 st.write("Upload an image of a currency note, and the model will predict its denomination.")
@@ -70,10 +58,19 @@ uploaded_file = st.file_uploader("Choose an image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert('RGB')
-    st.image(image, caption='Uploaded Image.', use_column_width=True)
-    st.write("")
-    st.write("Classifying")
-
     prediction = predict(image, model, transform)
 
-    st.write(f"The model predicts this is a: **{prediction}**")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.image(image, caption='Uploaded Image.', width=300)
+
+    with col2:
+        st.markdown("### 🧾 Prediction")
+        st.markdown(
+            f"<div style='padding:20px; border-radius:10px;border:2px solid white; text-align:center;'>"
+            f"<span style='font-size:24px; font-weight:bold;'> {prediction} </span>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+
